@@ -5,6 +5,10 @@ FROM alpine:3.7
 ENV WORKDIR_FOLDER=/tmp/workdir
 RUN mkdir -p $WORKDIR_FOLDER
 
+WORKDIR $WORKDIR_FOLDER
+
+COPY requirements.txt $WORKDIR_FOLDER
+
 RUN apk add --no-cache python3 \
  && python3 -m ensurepip \
  && pip3 install --upgrade pip setuptools \
@@ -18,12 +22,8 @@ RUN apk add --no-cache python3 \
  && npm i npm@latest -g \
  && npm install -g @angular/cli@7.3.9 \
 ### 4. install dependencies for eventlet, gevent, crypto
- && apk add --no-cache --virtual .build-deps gcc musl-dev libffi-dev libressl-dev\
- && pip install cython
-
-
-WORKDIR $WORKDIR_FOLDER
-
-COPY requirements.txt $WORKDIR_FOLDER
-RUN pip install -r requirements.txt \
+ && apk add --no-cache --virtual .build-deps build-base linux-headers gcc musl-dev libffi-dev libressl-dev jpeg-dev zlib-dev openblas-dev \
+ && pip install cython \
+ && pip install -r requirements.txt \
  && rm requirements.txt
+
