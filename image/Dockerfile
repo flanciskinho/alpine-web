@@ -1,30 +1,25 @@
-FROM alpine:3.7
+# syntax = docker/dockerfile:experimental
+
+FROM python:3.7-alpine
 
 # used https://www.fromlatest.io/#/ to reduce docker image size
 
-ENV WORKDIR_FOLDER=/tmp/workdir
-RUN mkdir -p $WORKDIR_FOLDER
+# install dependences for python, C and heif support
+### install dependencies for eventlet, gevent, crypto and python things
+RUN apk add --no-cache libxml2 libxml2-dev libxslt-dev  \
+ && apk add --no-cache --virtual .build-deps build-base linux-headers gcc musl-dev libffi-dev libressl-dev jpeg-dev zlib-dev openblas-dev lapack lapack-dev \
+ && apk add --no-cache --update x265 libde265 libheif libheif-dev 
 
-WORKDIR $WORKDIR_FOLDER
-
-COPY requirements.txt $WORKDIR_FOLDER
-
-RUN apk add --no-cache python3 \
- && apk add --no-cache bash \
- && python3 -m ensurepip \
- && pip3 install --upgrade pip setuptools \
- && rm -r /usr/lib/python*/ensurepip \
- && if [ ! -e /usr/bin/pip ]; then ln -s pip3 /usr/bin/pip ; fi \
- && if [[ ! -e /usr/bin/python ]]; then ln -sf /usr/bin/python3 /usr/bin/python; fi \
- && apk add --no-cache python3-dev libxml2 libxml2-dev libxslt-dev  \
-### 3. Get ng-cli
- && apk add --no-cache --update nodejs \
+###  Get ng-cli
+RUN apk add --no-cache --update nodejs npm \
  #update npm
  && npm i npm@latest -g \
- && npm install -g @angular/cli@7.3.9 \
-### 4. install dependencies for eventlet, gevent, crypto
- && apk add --no-cache --virtual .build-deps build-base linux-headers gcc musl-dev libffi-dev libressl-dev jpeg-dev zlib-dev openblas-dev \
- && pip install cython \
- && pip install -r requirements.txt \
- && rm requirements.txt
+ && npm install -g @angular/cli@7.3.9
+
+
+RUN --mount=source=./,target=/tmp \
+    pip install --no-cache-dir --upgrade pip \
+ && pip install --no-cache-dir cython \
+ && pip install --no-cache-dir -r /tmp/requirements.txt
+
 
